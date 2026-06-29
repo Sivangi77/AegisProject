@@ -29,6 +29,8 @@ app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/calendar', require('./routes/calendarRoutes'));
+app.use('/api/goals', require('./routes/goalRoutes'));
+app.use('/api/habits', require('./routes/habitRoutes'));
 
 // Start Server
 const PORT = process.env.PORT || 5000;
