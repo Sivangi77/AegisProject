@@ -1,10 +1,10 @@
 const express = require('express');
 const { getAuthUrl, oauth2Client } = require('../calendar/googleClient');
-const { protect } = require('../middleware/authMiddleware');
+const { requireAuth } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get('/auth-url', protect, (req, res) => {
+router.get('/auth-url', requireAuth, (req, res) => {
   const url = getAuthUrl();
   res.json({ success: true, url });
 });

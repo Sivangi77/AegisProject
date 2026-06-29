@@ -8,7 +8,9 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   productivityScore: { type: Number, default: 0 },
   xp: { type: Number, default: 0 },
-  level: { type: Number, default: 1 }
+  level: { type: Number, default: 1 },
+  provider: { type: String, default: 'password' },
+  lastLogin: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

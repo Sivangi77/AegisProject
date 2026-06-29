@@ -4,6 +4,7 @@ import AuthLayout from '../layouts/AuthLayout';
 import Dashboard from '../../pages/Dashboard/Dashboard';
 import Login from '../../pages/Auth/Login';
 import Signup from '../../pages/Auth/Signup';
+import ForgotPassword from '../../pages/Auth/ForgotPassword';
 import Focus from '../../pages/Focus/Focus';
 import Calendar from '../../pages/Calendar/Calendar';
 import Goals from '../../pages/Goals/Goals';
@@ -12,10 +13,20 @@ import Analytics from '../../pages/Analytics/Analytics';
 import Settings from '../../pages/Settings/Settings';
 import AI from '../../pages/AI/AI';
 import Tasks from '../../pages/Tasks/Tasks';
+import { useAuthStore } from "../../store/authStore"; // adjust path if needed
 
 const PrivateRoute = ({ children }) => {
-  const isAuthenticated = true; // TODO: Replace with auth state from Zustand/Firebase
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  const { user, loading } = useAuthStore();
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" replace />;
 };
 
 const AppRouter = () => {
@@ -26,6 +37,7 @@ const AppRouter = () => {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
 
         {/* Protected Routes */}

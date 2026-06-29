@@ -24,7 +24,9 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/calendar', require('./routes/calendarRoutes'));
 

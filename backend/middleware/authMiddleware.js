@@ -1,29 +1,28 @@
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-exports.protect = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  // Make sure token exists
-  if (!token) {
-    // For development/hackathon, bypass auth if no JWT_SECRET is setup
-    if(!process.env.JWT_SECRET) {
-        req.user = { id: '60d0fe4f5311236168a109ca', role: 'admin' }; // dummy user ID
-        return next();
-    }
-    return res.status(401).json({ success: false, error: 'Not authorized to access this route' });
-  }
-
+const requireAuth = async (req, res, next) => {
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
+
+    const uid = authHeader.split(' ')[1];
+    
+    // Find user by Firebase UID
+    const user = await User.findOne({ uid });
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized: User not found in database' });
+    }
+
+    // Attach MongoDB user document to request
+    req.user = user;
     next();
-  } catch (err) {
-    return res.status(401).json({ success: false, error: 'Not authorized to access this route' });
+  } catch (error) {
+    console.error('Auth Middleware Error:', error);
+    res.status(500).json({ message: 'Server error in authentication' });
   }
 };
+
+module.exports = { requireAuth };
