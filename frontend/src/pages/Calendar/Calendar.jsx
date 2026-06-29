@@ -6,6 +6,7 @@ import { useCalendarStore } from '../../store/calendarStore';
 import { useTaskStore } from '../../store/taskStore';
 import EventModal from '../../components/calendar/EventModal';
 import toast from 'react-hot-toast';
+import { auth } from '../../services/firebase/config';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -291,7 +292,27 @@ const Calendar = () => {
             <h3 className="font-semibold">Google Calendar</h3>
           </div>
           <p className="text-sm text-muted-foreground mb-4">Sync your external meetings automatically.</p>
-          <button className="w-full py-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium rounded-xl transition-colors border border-border">
+          <button 
+            onClick={async () => {
+              try {
+                toast.loading('Redirecting to Google...', { id: 'gcal' });
+                const user = auth.currentUser;
+                const res = await fetch('http://localhost:5000/api/calendar/auth-url', {
+                  headers: { 'Authorization': `Bearer ${user.uid}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                  toast.success('Redirecting...', { id: 'gcal' });
+                  window.location.href = data.url;
+                } else {
+                  toast.error('Failed to get auth URL', { id: 'gcal' });
+                }
+              } catch (e) {
+                toast.error('Connection error', { id: 'gcal' });
+              }
+            }}
+            className="w-full py-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium rounded-xl transition-colors border border-border"
+          >
             Connect Account
           </button>
         </div>

@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
   xp: { type: Number, default: 0 },
   level: { type: Number, default: 1 },
   provider: { type: String, default: 'password' },
-  lastLogin: { type: Date }
+  lastLogin: { type: Date },
+  googleCalendarTokens: { type: Object, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

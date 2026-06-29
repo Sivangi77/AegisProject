@@ -2,39 +2,58 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, Square, Headphones, Settings2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { useFocusStore } from '../../store/focusStore';
 
 const Focus = () => {
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  // 25 minutes default
+  const DEFAULT_TIME = 25 * 60;
+  
+  const [timeLeft, setTimeLeft] = useState(DEFAULT_TIME);
   const [isActive, setIsActive] = useState(false);
+  const { saveSession } = useFocusStore();
 
   useEffect(() => {
     let interval = null;
+    
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft((time) => time - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && isActive) {
+      // Timer finished naturally!
       setIsActive(false);
-      // Play sound or notification
+      
+      // Calculate minutes elapsed (if we allow custom times later, this is safer)
+      const minutesCompleted = Math.floor(DEFAULT_TIME / 60);
+      saveSession(minutesCompleted, "Deep Work Session");
+      
+      // Reset for next session
+      setTimeLeft(DEFAULT_TIME);
     }
+    
     return () => clearInterval(interval);
-  }, [isActive, timeLeft]);
+  }, [isActive, timeLeft, saveSession, DEFAULT_TIME]);
 
   const toggleTimer = () => setIsActive(!isActive);
-  const resetTimer = () => {
+  
+  const stopTimerEarly = () => {
     setIsActive(false);
-    setTimeLeft(25 * 60);
+    // If they stop early, we can optionally save the partial session, but usually Pomodoro is all-or-nothing
+    setTimeLeft(DEFAULT_TIME);
   };
 
   const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
   const seconds = (timeLeft % 60).toString().padStart(2, '0');
+
+  // Calculate progress for the ring
+  const progressPercent = ((DEFAULT_TIME - timeLeft) / DEFAULT_TIME) * 100;
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-full items-center justify-center p-6">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass rounded-3xl p-12 w-full max-w-2xl flex flex-col items-center relative overflow-hidden"
+        className="glass rounded-3xl p-12 w-full max-w-2xl flex flex-col items-center relative overflow-hidden shadow-2xl"
       >
         <div className="absolute top-6 right-6 flex gap-4">
           <button className="text-muted-foreground hover:text-foreground transition-colors p-2 bg-secondary rounded-full">
@@ -46,26 +65,40 @@ const Focus = () => {
         </div>
 
         <h2 className="text-2xl font-bold mb-2">Deep Work Session</h2>
-        <p className="text-muted-foreground mb-12">Current Task: Finish AI Agent Implementation</p>
+        <p className="text-muted-foreground mb-12">Stay focused and earn productivity points</p>
 
-        <div className="relative flex items-center justify-center w-64 h-64 mb-12">
-          {/* Decorative Rings */}
-          <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-          <motion.div 
-            className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent border-l-transparent"
-            animate={{ rotate: isActive ? 360 : 0 }}
-            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-          />
+        <div className="relative flex items-center justify-center w-72 h-72 mb-12">
+          {/* Background Ring */}
+          <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+            <circle
+              cx="144"
+              cy="144"
+              r="130"
+              className="stroke-secondary fill-none"
+              strokeWidth="8"
+            />
+            {/* Animated Progress Ring */}
+            <circle
+              cx="144"
+              cy="144"
+              r="130"
+              className="stroke-primary fill-none transition-all duration-1000 ease-linear"
+              strokeWidth="8"
+              strokeDasharray={2 * Math.PI * 130}
+              strokeDashoffset={2 * Math.PI * 130 * (1 - progressPercent / 100)}
+              strokeLinecap="round"
+            />
+          </svg>
           
-          <span className="text-7xl font-bold tracking-tighter tabular-nums text-foreground">
+          <span className="text-7xl font-bold tracking-tighter tabular-nums text-foreground z-10">
             {minutes}:{seconds}
           </span>
         </div>
 
         <div className="flex items-center gap-6">
           <button 
-            onClick={resetTimer}
-            className="p-4 rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            onClick={stopTimerEarly}
+            className="p-4 rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors shadow-sm"
           >
             <Square className="w-6 h-6" />
           </button>

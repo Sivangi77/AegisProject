@@ -7,7 +7,8 @@ const eventSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   startTime: { type: String }, // Format: "HH:mm"
   endTime: { type: String },
-  type: { type: String, enum: ['event', 'meeting', 'reminder'], default: 'event' }
+  type: { type: String, enum: ['event', 'task', 'reminder'], default: 'event' },
+  googleEventId: { type: String, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Event', eventSchema);

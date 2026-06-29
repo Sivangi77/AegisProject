@@ -1,18 +1,24 @@
+import { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { PieChart } from 'lucide-react';
+import { PieChart, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-const data = [
-  { name: 'Mon', focus: 4, tasks: 5 },
-  { name: 'Tue', focus: 3, tasks: 4 },
-  { name: 'Wed', focus: 6, tasks: 8 },
-  { name: 'Thu', focus: 5, tasks: 6 },
-  { name: 'Fri', focus: 7, tasks: 9 },
-  { name: 'Sat', focus: 2, tasks: 2 },
-  { name: 'Sun', focus: 1, tasks: 1 },
-];
+import { useAnalyticsStore } from '../../store/analyticsStore';
 
 const Analytics = () => {
+  const { weeklyData, loading, fetchWeeklyAnalytics } = useAnalyticsStore();
+
+  useEffect(() => {
+    fetchWeeklyAnalytics();
+  }, [fetchWeeklyAnalytics]);
+
+  if (loading && weeklyData.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto h-full flex flex-col">
       <div className="flex justify-between items-center mb-8">
@@ -30,11 +36,11 @@ const Analytics = () => {
         >
           <h3 className="font-semibold text-lg mb-6 flex items-center gap-2">
             <PieChart className="w-5 h-5 text-primary" />
-            Focus Hours (This Week)
+            Focus Hours (Last 7 Days)
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)' }} />
@@ -42,7 +48,7 @@ const Analytics = () => {
                   cursor={{ fill: 'var(--secondary)' }}
                   contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                 />
-                <Bar dataKey="focus" fill="url(#colorFocus)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="focus" name="Hours" fill="url(#colorFocus)" radius={[4, 4, 0, 0]} />
                 <defs>
                   <linearGradient id="colorFocus" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
@@ -66,14 +72,14 @@ const Analytics = () => {
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)' }} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                 />
-                <Line type="monotone" dataKey="tasks" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" name="Tasks" dataKey="tasks" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

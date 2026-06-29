@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
-import { Target, Zap, Clock, TrendingUp, Sparkles, Loader2, CheckCircle2, Circle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { Target, Zap, Clock, TrendingUp, Sparkles, Loader2, CheckCircle2, Circle, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import StatCard from '../../components/cards/StatCard';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useTaskStore } from '../../store/taskStore';
@@ -8,6 +9,10 @@ import { useTaskStore } from '../../store/taskStore';
 const Dashboard = () => {
   const { dashboardData, loading, fetchDashboard } = useDashboardStore();
   const { updateTask } = useTaskStore(); // To allow completing tasks right from the dashboard
+  
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [generatedSchedule, setGeneratedSchedule] = useState('');
 
   useEffect(() => {
     fetchDashboard();
@@ -54,7 +59,10 @@ const Dashboard = () => {
           <p className="text-muted-foreground mt-1">Here's your productivity overview for today.</p>
         </div>
         
-        <button className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:scale-105 active:scale-95 font-medium">
+        <button 
+          onClick={() => window.location.href = '/ai-assistant'}
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:scale-105 active:scale-95 font-medium"
+        >
           <Sparkles className="w-4 h-4" />
           AI Daily Briefing
         </button>
@@ -181,13 +189,85 @@ const Dashboard = () => {
                 <h4 className="font-medium text-sm">AI Smart Schedule</h4>
                 <p className="text-xs text-muted-foreground">Let AI optimize your focus blocks</p>
               </div>
-              <button className="px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-xl transition-colors font-medium text-sm text-foreground">
-                Generate Schedule
+              <button 
+                onClick={async () => {
+                   setIsScheduleModalOpen(true);
+                   setScheduleLoading(true);
+                   try {
+                     const { auth } = await import('../../services/firebase/config');
+                     const token = auth.currentUser.uid;
+                     const res = await fetch('http://localhost:5000/api/ai/schedule', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                     });
+                     const data = await res.json();
+                     if (res.ok && data.data) {
+                        setGeneratedSchedule(data.data);
+                     } else {
+                        const errorMsg = data.error || "Failed to generate schedule.";
+                        setGeneratedSchedule(errorMsg);
+                        toast.error(errorMsg);
+                     }
+                   } catch(e) {
+                     setGeneratedSchedule("Error connecting to AI service.");
+                     toast.error("AI service is currently unavailable");
+                   } finally {
+                     setScheduleLoading(false);
+                   }
+                }}
+                disabled={scheduleLoading}
+                className={`px-4 py-2 rounded-xl transition-colors font-medium text-sm text-foreground ${scheduleLoading ? 'bg-secondary/50 cursor-not-allowed opacity-50' : 'bg-secondary hover:bg-secondary/80'}`}
+              >
+                {scheduleLoading ? 'Generating...' : 'Generate Schedule'}
               </button>
             </div>
           </div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {isScheduleModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-card border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-4 border-b border-border flex justify-between items-center bg-secondary/30">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  AI Smart Schedule
+                </h3>
+                <button onClick={() => setIsScheduleModalOpen(false)} className="p-1 hover:bg-secondary rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                {scheduleLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                    <p>AEGIS is analyzing your tasks and calendar...</p>
+                  </div>
+                ) : (
+                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                    {generatedSchedule}
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 border-t border-border flex justify-end bg-secondary/30">
+                <button 
+                  onClick={() => setIsScheduleModalOpen(false)}
+                  className="px-6 py-2 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

@@ -31,6 +31,8 @@ app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/calendar', require('./routes/calendarRoutes'));
 app.use('/api/goals', require('./routes/goalRoutes'));
 app.use('/api/habits', require('./routes/habitRoutes'));
+app.use('/api/focus', require('./routes/focusRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
 
 // Start Server
 const PORT = process.env.PORT || 5000;

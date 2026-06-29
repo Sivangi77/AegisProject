@@ -5,7 +5,26 @@ const { getEvents, createEvent, updateEvent, deleteEvent } = require('../control
 
 const router = express.Router();
 
-// Apply auth middleware to all routes
+// Callback from Google (MUST be unprotected because Google hits it without Bearer token)
+router.get('/callback', async (req, res) => {
+    const { code, state } = req.query; // state contains userId
+    try {
+        const { tokens } = await oauth2Client.getToken(code);
+        
+        if (state) {
+          const User = require('../models/User');
+          await User.findByIdAndUpdate(state, { googleCalendarTokens: tokens });
+        }
+        
+        // Redirect back to frontend
+        res.redirect('http://localhost:5173/dashboard?google_calendar_connected=true');
+    } catch(err) {
+        console.error('OAuth Callback Error:', err);
+        res.redirect('http://localhost:5173/dashboard?google_calendar_connected=false');
+    }
+});
+
+// Apply auth middleware to all routes below this point
 router.use(requireAuth);
 
 // Event CRUD Routes
@@ -14,21 +33,10 @@ router.post('/events', createEvent);
 router.put('/events/:id', updateEvent);
 router.delete('/events/:id', deleteEvent);
 
-// Google Calendar OAuth Routes (Placeholders)
+// Generate OAuth Consent URL
 router.get('/auth-url', (req, res) => {
-  const url = getAuthUrl();
+  const url = getAuthUrl(req.user._id.toString());
   res.json({ success: true, url });
-});
-
-router.get('/callback', async (req, res) => {
-    const { code } = req.query;
-    try {
-        const { tokens } = await oauth2Client.getToken(code);
-        // Save tokens to user model in database
-        res.status(200).json({ success: true, message: 'Google accounts synced' });
-    } catch(err) {
-        res.status(400).json({ success: false, error: 'Failed to authenticate with Google' });
-    }
 });
 
 module.exports = router;

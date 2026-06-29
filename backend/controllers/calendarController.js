@@ -26,6 +26,15 @@ const createEvent = async (req, res) => {
     });
 
     const savedEvent = await newEvent.save();
+
+    // Sync to Google Calendar
+    const { syncEventToGoogle } = require('../calendar/googleClient');
+    const googleRes = await syncEventToGoogle(req.user._id, savedEvent);
+    if (googleRes && googleRes.id) {
+      savedEvent.googleEventId = googleRes.id;
+      await savedEvent.save();
+    }
+
     res.status(201).json(savedEvent);
   } catch (error) {
     res.status(500).json({ message: 'Failed to create event', error: error.message });
@@ -55,6 +64,12 @@ const deleteEvent = async (req, res) => {
     
     if (!deletedEvent) return res.status(404).json({ message: 'Event not found' });
     
+    // Delete from Google Calendar
+    if (deletedEvent.googleEventId) {
+      const { deleteEventFromGoogle } = require('../calendar/googleClient');
+      await deleteEventFromGoogle(req.user._id, deletedEvent.googleEventId);
+    }
+
     res.status(200).json({ message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete event', error: error.message });

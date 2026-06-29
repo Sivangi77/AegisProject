@@ -13,6 +13,7 @@ import Analytics from '../../pages/Analytics/Analytics';
 import Settings from '../../pages/Settings/Settings';
 import AI from '../../pages/AI/AI';
 import Tasks from '../../pages/Tasks/Tasks';
+import Profile from '../../pages/Profile/Profile';
 import { useAuthStore } from "../../store/authStore"; // adjust path if needed
 
 const PrivateRoute = ({ children }) => {
@@ -52,6 +53,7 @@ const AppRouter = () => {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/ai-assistant" element={<AI />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* 404 */}
