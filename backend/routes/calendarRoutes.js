@@ -1,15 +1,25 @@
 const express = require('express');
 const { getAuthUrl, oauth2Client } = require('../calendar/googleClient');
 const { requireAuth } = require('../middleware/authMiddleware');
+const { getEvents, createEvent, updateEvent, deleteEvent } = require('../controllers/calendarController');
 
 const router = express.Router();
 
-router.get('/auth-url', requireAuth, (req, res) => {
+// Apply auth middleware to all routes
+router.use(requireAuth);
+
+// Event CRUD Routes
+router.get('/events', getEvents);
+router.post('/events', createEvent);
+router.put('/events/:id', updateEvent);
+router.delete('/events/:id', deleteEvent);
+
+// Google Calendar OAuth Routes (Placeholders)
+router.get('/auth-url', (req, res) => {
   const url = getAuthUrl();
   res.json({ success: true, url });
 });
 
-// OAuth Callback would go here
 router.get('/callback', async (req, res) => {
     const { code } = req.query;
     try {
