@@ -18,4 +18,27 @@ const getGeminiResponse = async (prompt, systemInstruction = '') => {
   }
 };
 
-module.exports = { getGeminiResponse };
+const streamGeminiResponse = async (history, newPrompt, systemInstruction = '') => {
+  try {
+    const formattedHistory = history.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.text }]
+    }));
+
+    const chat = ai.chats.create({
+      model: 'gemini-2.5-flash',
+      config: {
+        systemInstruction: systemInstruction,
+      },
+      history: formattedHistory
+    });
+
+    const resultStream = await chat.sendMessageStream({ message: newPrompt });
+    return resultStream;
+  } catch (error) {
+    console.error('Gemini Stream API Error:', error);
+    throw new Error('Failed to generate AI stream');
+  }
+};
+
+module.exports = { getGeminiResponse, streamGeminiResponse };
